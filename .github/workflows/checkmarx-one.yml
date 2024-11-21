@@ -1,57 +1,51 @@
-# rq
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
+name: Checkmarx One dast-scan
 
-# The Checkmarx One GitHub Action enables you to trigger SAST, SCA, and KICS scans directly from the GitHub workflow.
-# It provides a wrapper around the Checkmarx One CLI Tool which creates a zip archive from your source code repository
-# and uploads it to Checkmarx One for scanning. The Github Action provides easy integration with GitHub while enabling
-# scan customization using the full functionality and flexibility of the CLI tool.
-
-# This is a basic workflow to help you get started with Using Checkmarx One Action,
-# documentation can be found here : https://checkmarx.com/resource/documents/en/34965-68702-checkmarx-one-github-actions.html
-
-name: Checkmarx Scan
-
-# Controls when the workflow will run
 on:
-  pull_request:
-    types: [opened, reopened, synchronize]
-    branches: [ "main" ]
+  push:
+    branches:
+      - main
 
-permissions:
-  contents: read
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    permissions:
-      contents: read # for actions/checkout to fetch code
-      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
-      actions: read # only required for a private repository by github/codeql-action/upload-sarif
-
-    # The type of runner that the job will run on
+  checkmarx-scan:
     runs-on: ubuntu-latest
+    #runs-on: self-hosted
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - uses: actions/checkout@v3
-    # Scan Iac with DAST
-    - name: Checkmarx DAST Github Action
-      uses: Checkmarx/dast-github-action@v1.0.0-beta
-      env:
-        CX_APIKEY: ${{ secrets.CX_ONE_API_KEY }}
-      with:
-        command: "web"
-        config: 'web.yaml'
-        base_url: "https://anz.ast.checkmarx.net/"
-        environment_id: "9c4ad497-236b-481a-bf6d-d0411dc1a58d"
-        verbose: true
-    - uses: actions/upload-artifact@v3
-      name: Upload Logs
-      with:
-        name: report
-        path: ./output
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+      - name: Check current directory
+        run: pwd
+      - name: Chown
+        run: sudo chown -R 1000:1000 ${{ github.workspace }}
+      - name: List files
+        run: ls -laR
+        
+      # Scan Iac with kics
+      - name: Checkmarx DAST Github Action
+        uses: Checkmarx/dast-github-action@v2.3.0
+        env:
+          CX_APIKEY: ${{ secrets.CX_ONE_API_KEY }}
+        with:
+          command: "web"
+          config: "./web.yaml"
+          base_url: "https://anz.ast.checkmarx.net/"
+          #environment_id: "341bb9a2-54a3-445e-8b67-f34a15212e9e"
+          environment_id: "99905b1f-a777-40bd-90b0-00aad3b27fca"
+          output: dast-output
+          fail_on: "HIGH"
+          verbose: true
+          
+      - name: List files
+        run: ls -laR
+        
+      - uses: actions/upload-artifact@v3
+        name: Upload Logs
+        with:
+            name: report
+            path: dast-output/*/*.*
+
+
+            
