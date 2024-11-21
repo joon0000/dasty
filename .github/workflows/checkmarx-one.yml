@@ -46,7 +46,7 @@ jobs:
       with:
         command: "web"
         config: 'web.yaml'
-        base_url: "http://testfire.net/"
+        base_url: "https://anz.ast.checkmarx.net/"
         environment_id: "9c4ad497-236b-481a-bf6d-d0411dc1a58d"
         verbose: true
     - uses: actions/upload-artifact@v3
